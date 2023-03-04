@@ -1,0 +1,10 @@
+{
+  "openAI" : {
+    "apiKey" : "OPENAI_API_KEY_PLACEHOLDER"
+  } ,
+  "discord" : {
+    "publicKey" : "DISCORD_PUBLIC_KEY_PLACEHOLDER",
+    "applicationId" : "DISCORD_APPLICATION_ID_PLACEHOLDER",
+    "botToken" : "DISCORD_BOT_TOKEN_PLACEHOLDER"
+  }
+}
