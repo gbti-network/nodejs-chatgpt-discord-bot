@@ -12,7 +12,7 @@ This is a simple Discord bot that uses OpenAI's GPT language model to chat with 
 1. Clone the repository or download the source code
 2. Install dependencies with `npm install`
 3. Create a `config.json` file based on the `config-example.json` file and add your Discord bot token and OpenAI API key
-4. Start the bot with `npm start`
+4. Start the bot with node chatgpt.js`
 
 ## Usage
 
