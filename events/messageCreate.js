@@ -11,7 +11,7 @@ module.exports = (client) => {
         // Check if message is arriving within a thread
         if (!message.position) {
             // If not, send a message prompting users to use the /chat command within a thread
-            await message.channel.send('Welcome to the #ChatGPT channel!\n\nTo chat, use the `/chat` command followed by your message.');
+            await message.channel.send('Welcome to the #ChatGPT channel!\n\nTo chat, use the `/chat` command followed by your message. Include `--public` in your prompt to make the thread public.');
         } else {
 
             // Call interactionReply to get the response from ChatGPT API

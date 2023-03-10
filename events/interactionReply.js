@@ -19,7 +19,7 @@ module.exports = (message) => {
             messages: [
                 {
                     role: 'system',
-                    content: `You are a brilliant web developer who is talking to @${username}.`,
+                    content: `You are a brilliant coder, developer, and designer who is talking to @${username}.`,
                 },
             ],
         };

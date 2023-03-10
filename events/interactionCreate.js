@@ -1,4 +1,5 @@
 const interactionReply = require('./interactionReply');
+const { ChannelType } = require('discord.js');
 
 // Memory to hold previous interactions
 let memory = [];
@@ -13,8 +14,12 @@ module.exports = (client) => {
             return;
         }
 
-        const prompt = interaction.options.getString('prompt');
+        let prompt = interaction.options.getString('prompt');
+        const isPublic = prompt.includes('--public');
+        prompt = prompt.replace('--public' , '' )
 
+        console.log(isPublic)
+        console.log(prompt)
         // building the username object since it does not appear avaiable in the interaction variable
         const message = {
             'author' : {
@@ -38,7 +43,7 @@ module.exports = (client) => {
         }
 
 
-        await interaction.editReply('New thread created.');
+        await interaction.editReply('@'+message.author.username + ' has created a new ' + (isPublic? 'public' : 'private') + ' ChatGPT thread : )');
 
         // Send response to Discord channel
         await interaction.channel.threads
@@ -46,12 +51,11 @@ module.exports = (client) => {
                 name: prompt,
                 autoArchiveDuration: 60,
                 reason: prompt,
-                locked: true
+                type : (isPublic) ? ChannelType.PublicThread : ChannelType.PrivateThread
             })
             .then((thread) => {
 
                 thread.members.add(interaction.user.id);
-                thread.members.add(client.user.id);
 
                 chunks.forEach((chunk) => {
                     thread.send(chunk);
