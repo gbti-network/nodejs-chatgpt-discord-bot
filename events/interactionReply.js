@@ -17,8 +17,6 @@ module.exports = (message) => {
             ],
         };
 
-        console.log(data);
-
         // Add previous messages to data
         for (let i = 0; i < memory.length; i++) {
             data.messages.push({

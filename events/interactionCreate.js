@@ -1,5 +1,4 @@
-const axios = require('axios');
-const config = require('../config.json');
+const interactionReply = require('./interactionReply');
 
 // Memory to hold previous interactions
 let memory = [];
@@ -10,78 +9,38 @@ module.exports = (client) => {
 
         // Do not permit /chat inside a thread all ready
         if ( typeof interaction.channel.threads == 'undefined' ) {
-            await interaction.deferReply();
-            await interaction.editReply('You are already in a thread, please respond directly to continue the conversation.');
+            await interaction.reply(`You are already in a thread, please respond directly to continue the conversation.`);
             return;
         }
+
         const prompt = interaction.options.getString('prompt');
 
-        // Acknowledge the interaction
-        await interaction.deferReply();
-
-        // Build data to send to ChatGPT API
-        const data = {
-            model: 'gpt-3.5-turbo',
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are a brilliant web developer.',
-                },
-            ],
+        // building the username object since it does not appear avaiable in the interaction variable
+        const message = {
+            'author' : {
+                'username' : interaction.user.username
+            },
+            'content' : prompt
         };
 
-        // Add previous messages to data
-        for (let i = 0; i < memory.length; i++) {
-            data.messages.push({
-                role: memory[i].role,
-                content: memory[i].content,
-            });
+        console.log(message);
+        //return;
+
+        await interaction.deferReply();
+
+        let chunks;
+        try {
+            chunks = await interactionReply(message);
+        } catch (error) {
+            //console.error(error);
+            await interaction.editReply('There was an error processing your request.');
+            return;
         }
 
-        // Add user's prompt to data
-        data.messages.push({
-            role: 'user',
-            content: prompt,
-        });
-
-        // Send data to ChatGPT API
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                max_tokens: 2048,
-                n: 1,
-                temperature: 0.7,
-                frequency_penalty: 0.5,
-                presence_penalty: 0.5,
-                model: 'gpt-3.5-turbo',
-                ...data,
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${config.openAI.apiKey}`,
-                },
-            }
-        );
-
-        memory.push({
-            role: 'user',
-            content: prompt,
-        });
-        memory.push({
-            role: 'assistant',
-            content: response.data.choices[0].text,
-        });
-
-        // Store previous messages in memory
-        if (memory.length >= 50) {
-            memory.shift();
-        }
 
         await interaction.editReply('New thread created.');
 
         // Send response to Discord channel
-        //console.log(response.data.choices);
         await interaction.channel.threads
             .create({
                 name: prompt,
@@ -89,8 +48,13 @@ module.exports = (client) => {
                 reason: prompt,
             })
             .then((thread) => {
+
                 thread.members.add(interaction.user.id);
-                thread.send(response.data.choices[0].message.content.trim());
+
+                chunks.forEach((chunk) => {
+                    thread.send(chunk);
+                });
+
             })
             .catch((error) => {
                 console.error(error);
