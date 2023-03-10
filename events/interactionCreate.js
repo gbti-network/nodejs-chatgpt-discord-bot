@@ -46,10 +46,12 @@ module.exports = (client) => {
                 name: prompt,
                 autoArchiveDuration: 60,
                 reason: prompt,
+                locked: true
             })
             .then((thread) => {
 
                 thread.members.add(interaction.user.id);
+                thread.members.add(client.user.id);
 
                 chunks.forEach((chunk) => {
                     thread.send(chunk);

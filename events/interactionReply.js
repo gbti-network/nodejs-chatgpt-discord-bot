@@ -1,27 +1,34 @@
 const axios = require('axios');
 const config = require('../config.json');
 
-// Memory to hold previous interactions
-let memory = [];
+// Memory to hold previous interactions for each user
+const memory = {};
 
 module.exports = (message) => {
     return new Promise((resolve, reject) => {
+        const username = message.author.username;
+
+        // Initialize memory for the user if it doesn't exist
+        if (!memory[username]) {
+            memory[username] = [];
+        }
+
         // Build data to send to ChatGPT API
         const data = {
             model: 'gpt-3.5-turbo',
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a brilliant web developer who is talking to @' + message.author.username +'.',
+                    content: `You are a brilliant web developer who is talking to @${username}.`,
                 },
             ],
         };
 
         // Add previous messages to data
-        for (let i = 0; i < memory.length; i++) {
+        for (let i = 0; i < memory[username].length; i++) {
             data.messages.push({
-                role: memory[i].role,
-                content: memory[i].content,
+                role: memory[username][i].role,
+                content: memory[username][i].content,
             });
         }
 
@@ -31,14 +38,15 @@ module.exports = (message) => {
             content: message.content,
         });
 
-        // make sure we limit memory to 50
-        if (memory.length >= 50) {
-            memory.shift();
+        // Limit memory to 50 for each user
+        if (memory[username].length >= 50) {
+            memory[username].shift();
         }
 
         // Output data size to see how it grows
         const dataSize = JSON.stringify(data.messages).length;
         console.log(`Data size: ${dataSize} bytes`);
+        //console.log(data);
 
         // Send data to ChatGPT API
         axios
@@ -62,7 +70,8 @@ module.exports = (message) => {
             )
             .then((response) => {
 
-                const content = response.data.choices[0].message.content.trim();
+                const content = response.data.choices[0].message.content
+
                 const contentLength = content.length;
                 const maxLength = 2000;
                 const numChunks = Math.ceil(contentLength / maxLength);
@@ -80,10 +89,12 @@ module.exports = (message) => {
                     }
                 }
 
-                memory.push({
+
+                memory[username].push({
                     role: 'assistant',
                     content: content,
                 });
+
                 resolve(chunks);
             })
             .catch((error) => {
