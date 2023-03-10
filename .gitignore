@@ -1,4 +1,8 @@
 .idea/
 package-lock.json
+package-lock
 config.json
 node_modules/
+snapshots/
+.git
+__pycache__/
