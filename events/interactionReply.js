@@ -7,10 +7,12 @@ const memory = {};
 module.exports = (message) => {
     return new Promise((resolve, reject) => {
         const username = message.author.username;
-
+        const channelId = message.channel.id;
+        console.log('channelId')
+        console.log(channelId);
         // Initialize memory for the user if it doesn't exist
-        if (!memory[username]) {
-            memory[username] = [];
+        if (!memory[channelId]) {
+            memory[channelId] = [];
         }
 
         // Build data to send to ChatGPT API
@@ -25,10 +27,10 @@ module.exports = (message) => {
         };
 
         // Add previous messages to data
-        for (let i = 0; i < memory[username].length; i++) {
+        for (let i = 0; i < memory[channelId].length; i++) {
             data.messages.push({
-                role: memory[username][i].role,
-                content: memory[username][i].content,
+                role: memory[channelId][i].role,
+                content: memory[channelId][i].content,
             });
         }
 
@@ -39,8 +41,8 @@ module.exports = (message) => {
         });
 
         // Limit memory to 50 for each user
-        if (memory[username].length >= 50) {
-            memory[username].shift();
+        if (memory[channelId].length >= 50) {
+            memory[channelId].shift();
         }
 
         // Output data size to see how it grows
@@ -90,7 +92,7 @@ module.exports = (message) => {
                 }
 
 
-                memory[username].push({
+                memory[channelId].push({
                     role: 'assistant',
                     content: content,
                 });

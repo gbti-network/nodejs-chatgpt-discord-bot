@@ -6,8 +6,7 @@ module.exports = (client) => {
     return async (message) => {
         // Ignore messages from the bot itself
         if (message.author.bot) return;
-        //console.log(message);
-        //console.log(message.reference);
+
         // Check if message is arriving within a thread
         if (!message.position) {
             // If not, send a message prompting users to use the /chat command within a thread

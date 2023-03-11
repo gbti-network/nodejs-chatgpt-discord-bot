@@ -1,70 +1,62 @@
 const interactionReply = require('./interactionReply');
 const { ChannelType } = require('discord.js');
 
-// Memory to hold previous interactions
-let memory = [];
-
 module.exports = (client) => {
     return async (interaction) => {
         if (!interaction.isCommand() || interaction.commandName !== 'chat') return;
 
-        // Do not permit /chat inside a thread all ready
-        if ( typeof interaction.channel.threads == 'undefined' ) {
-            await interaction.reply(`You are already in a thread, please respond directly to continue the conversation.`);
+        // Check if the command is called within a thread
+        if (typeof interaction.channel.threads === 'undefined') {
+            await interaction.reply('You cannot use the `/chat` command inside a thread. Please comment normally to progress the conversation.');
             return;
         }
 
+        await interaction.deferReply()
+
+        // Extract the prompt from the command
         let prompt = interaction.options.getString('prompt');
         const isPublic = prompt.includes('--public');
-        prompt = prompt.replace('--public' , '' )
+        prompt = prompt.replace('--public', '');
 
-        console.log(isPublic)
-        console.log(prompt)
-        // building the username object since it does not appear avaiable in the interaction variable
+        // Create a new thread with the prompt as the thread name
+        const threadName = prompt;
+        const threadOptions = {
+            name: prompt,
+            autoArchiveDuration: 60,
+            reason: threadName,
+            type: isPublic ? ChannelType.PublicThread : ChannelType.PrivateThread,
+        };
+        const thread = await interaction.channel.threads.create(threadOptions);
+
+        // Building the message object to pass to interactionReply
         const message = {
-            'author' : {
-                'username' : interaction.user.username
+            author: {
+                username: interaction.user.username,
             },
-            'content' : prompt
+            content: prompt,
+            channel: {
+                id: thread.id,
+            },
         };
 
-        console.log(message);
-        //return;
-
-        await interaction.deferReply();
-
+        // Call interactionReply to get the response from ChatGPT API
         let chunks;
         try {
             chunks = await interactionReply(message);
         } catch (error) {
-            //console.error(error);
             await interaction.editReply('There was an error processing your request.');
             return;
         }
 
+        // Add user to thread
+        thread.members.add(interaction.user.id)
 
-        await interaction.editReply('@'+message.author.username + ' has created a new ' + (isPublic? 'public' : 'private') + ' ChatGPT thread : )');
+        // Send response to Discord thread
+        chunks.forEach((chunk) => {
+            thread.send(chunk);
+        });
 
-        // Send response to Discord channel
-        await interaction.channel.threads
-            .create({
-                name: prompt,
-                autoArchiveDuration: 60,
-                reason: prompt,
-                type : (isPublic) ? ChannelType.PublicThread : ChannelType.PrivateThread
-            })
-            .then((thread) => {
-
-                thread.members.add(interaction.user.id);
-
-                chunks.forEach((chunk) => {
-                    thread.send(chunk);
-                });
-
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-
-    }
+        // Edit initial reply to show that thread was created
+        await interaction.editReply(`@${message.author.username} has created a new ${isPublic ? 'public' : 'private'} ChatGPT thread.`);
+    };
 };

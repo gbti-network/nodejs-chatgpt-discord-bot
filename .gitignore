@@ -3,6 +3,6 @@ package-lock.json
 package-lock
 config.json
 node_modules/
-snapshots/
+snapshots/captures
 .git
 __pycache__/
